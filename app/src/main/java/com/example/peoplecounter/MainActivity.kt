@@ -2,121 +2,115 @@ package com.example.peoplecounter
 
 import android.content.Context
 import android.os.Bundle
-import android.view.View
-import android.widget.Button
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
+import com.example.peoplecounter.databinding.ActivityMainBinding
 
 const val SAVED_TOTAL_COUNTER = "savedTotalCounter"
 const val SAVED_PEOPLE_COUNTER = "savedPeopleCounter"
-const val OVER_CAPACITY_INDICATOR = "overCapacityIndicator"
+const val SAVED_PEOPLE_COUNTER_COLOR = "overCapacityIndicator"
 const val SAVED_SUB_BUTTON_VISIBILITY = "savedSubButtonVisibility"
 
 
 class MainActivity : AppCompatActivity() {
 
-    // Views
-    private lateinit var btnAdd : Button
-    private lateinit var btnSubtract: Button
-    private lateinit var btnReset: Button
-    private lateinit var tvPeopleCounter: TextView
-    private lateinit var tvTotalCounter: TextView
+//    private val viewModel: MainViewModel by lazy { ViewModelProvider(this).get(MainViewModel::class.java)
+    private lateinit var viewModel: MainViewModel
 
-    // Counter variables
-    private var totalCounter = 0
-    private var peopleCounter = 0
+    private lateinit var ui: ActivityMainBinding
 
     // SharedPreferences
     private val sharedPrefs = "com.example.peoplecounter"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        ui = ActivityMainBinding.inflate(layoutInflater)
 
-        btnAdd = findViewById(R.id.btn_add)
-        btnSubtract = findViewById(R.id.btn_subtract)
-        btnSubtract.visibility = View.INVISIBLE
-        btnReset = findViewById(R.id.btn_reset)
-        tvPeopleCounter = findViewById(R.id.tv_people_counter)
-        tvTotalCounter = findViewById(R.id.tv_total_counter)
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-        tvTotalCounter.text = getString(R.string.total_count, totalCounter)
-        tvPeopleCounter.text = getString(R.string.people_count, peopleCounter)
+        ui.btnAdd.setOnClickListener { onIncrementClicked() }
+        ui.btnSubtract.setOnClickListener { onDecrementClicked() }
+        ui.btnReset.setOnClickListener { onResetClicked() }
+        updatePeopleCounterText()
+        updateTotalCounterText()
 
-        btnAdd.setOnClickListener {
-            btnSubtract.visibility = View.VISIBLE
-            totalCounter += 1
-            peopleCounter += 1
-            tvTotalCounter.text = getString(R.string.total_count, totalCounter)
-            if (peopleCounter > 15) {
-                tvPeopleCounter.setTextColor(android.graphics.Color.RED)
-            }
-            tvPeopleCounter.text = getString(R.string.people_count, peopleCounter)
+        val view = ui.root
+        setContentView(view)
 
-        }
-
-        btnSubtract.setOnClickListener {
-            peopleCounter -= 1
-            if (peopleCounter <= 15) {
-                tvPeopleCounter.setTextColor(ContextCompat.getColor(this, R.color.purple_700))
-            }
-            if (peopleCounter == 0) {
-                btnSubtract.visibility = View.INVISIBLE
-            }
-            tvPeopleCounter.text = getString(R.string.people_count, peopleCounter)
-        }
-
-        btnReset.setOnClickListener {
-            totalCounter = 0
-            peopleCounter = 0
-            btnSubtract.visibility = View.INVISIBLE
-            tvPeopleCounter.setTextColor(ContextCompat.getColor(this, R.color.purple_700))
-            tvTotalCounter.text = getString(R.string.total_count, totalCounter)
-            tvPeopleCounter.text = getString(R.string.people_count, peopleCounter)
-        }
-
+//        btnAdd = findViewById(R.id.btn_add)
+//        btnSubtract = findViewById(R.id.btn_subtract)
+//        btnSubtract.visibility = View.INVISIBLE
+//        btnReset = findViewById(R.id.btn_reset)
+//        tvPeopleCounter = findViewById(R.id.tv_people_counter)
+//        tvTotalCounter = findViewById(R.id.tv_total_counter)
+//
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        // Save counter values and UI configuration
-        outState.putInt(SAVED_TOTAL_COUNTER, totalCounter)
-        outState.putInt(SAVED_PEOPLE_COUNTER, peopleCounter)
-        outState.putInt(OVER_CAPACITY_INDICATOR, tvPeopleCounter.currentTextColor)
-        outState.putInt(SAVED_SUB_BUTTON_VISIBILITY, btnSubtract.visibility)
+    private fun onIncrementClicked() {
+        viewModel.onIncrementClicked()
+        updatePeopleCounterText()
+        updateTotalCounterText()
     }
 
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        // Restore total counter
-        totalCounter = savedInstanceState.getInt(SAVED_TOTAL_COUNTER, 0)
-        tvTotalCounter.text = getString(R.string.total_count, totalCounter)
-
-        // Restore people counter
-        peopleCounter = savedInstanceState.getInt(SAVED_PEOPLE_COUNTER, 0)
-        tvPeopleCounter.text = getString(R.string.people_count, peopleCounter)
-        tvPeopleCounter.setTextColor(savedInstanceState.getInt(OVER_CAPACITY_INDICATOR))
-
-        // Restore subtract button visibility
-        btnSubtract.visibility = savedInstanceState.getInt(SAVED_SUB_BUTTON_VISIBILITY)
-
+    private fun onDecrementClicked() {
+        viewModel.onDecrementClicked()
+        updatePeopleCounterText()
     }
+
+    private fun onResetClicked() {
+        viewModel.onResetClicked()
+        updatePeopleCounterText()
+        updateTotalCounterText()
+    }
+
+    private fun updatePeopleCounterText() {
+        ui.tvPeopleCounter.text = getString(R.string.people_count, viewModel.peopleCounter)
+        ui.tvPeopleCounter.setTextColor(ContextCompat.getColor(this, viewModel.peopleCounterColor))
+    }
+
+    private fun updateTotalCounterText() {
+        ui.tvTotalCounter.text = getString(R.string.total_count, viewModel.totalCounter)
+    }
+
+//    override fun onSaveInstanceState(outState: Bundle) {
+//        super.onSaveInstanceState(outState)
+//        // Save counter values and UI configuration
+//        outState.putInt(SAVED_TOTAL_COUNTER, totalCounter)
+//        outState.putInt(SAVED_PEOPLE_COUNTER, peopleCounter)
+//        outState.putInt(OVER_CAPACITY_INDICATOR, tvPeopleCounter.currentTextColor)
+//        outState.putInt(SAVED_SUB_BUTTON_VISIBILITY, btnSubtract.visibility)
+//    }
+//
+//    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+//        super.onRestoreInstanceState(savedInstanceState)
+//        // Restore total counter
+//        totalCounter = savedInstanceState.getInt(SAVED_TOTAL_COUNTER, 0)
+//        tvTotalCounter.text = getString(R.string.total_count, totalCounter)
+//
+//        // Restore people counter
+//        peopleCounter = savedInstanceState.getInt(SAVED_PEOPLE_COUNTER, 0)
+//        tvPeopleCounter.text = getString(R.string.people_count, peopleCounter)
+//        tvPeopleCounter.setTextColor(savedInstanceState.getInt(OVER_CAPACITY_INDICATOR))
+//
+//        // Restore subtract button visibility
+//        btnSubtract.visibility = savedInstanceState.getInt(SAVED_SUB_BUTTON_VISIBILITY)
+//
+//    }
 
     override fun onResume() {
         super.onResume()
         val pref = getSharedPreferences(sharedPrefs, Context.MODE_PRIVATE)
         // Restore total counter
-        totalCounter = pref.getInt(SAVED_TOTAL_COUNTER, 0)
-        tvTotalCounter.text = getString(R.string.total_count, totalCounter)
+        viewModel.totalCounter = pref.getInt(SAVED_TOTAL_COUNTER, 0)
+        updateTotalCounterText()
 
         // Restore people counter
-        peopleCounter = pref.getInt(SAVED_PEOPLE_COUNTER, 0)
-        tvPeopleCounter.text = getString(R.string.people_count, peopleCounter)
-        tvPeopleCounter.setTextColor(pref.getInt(OVER_CAPACITY_INDICATOR, tvPeopleCounter.currentTextColor))
+        viewModel.peopleCounter = pref.getInt(SAVED_PEOPLE_COUNTER, 0)
+        updatePeopleCounterText()
 
         // Restore subtract button visibility
-        btnSubtract.visibility = pref.getInt(SAVED_SUB_BUTTON_VISIBILITY, btnSubtract.visibility)
+        ui.btnSubtract.visibility = pref.getInt(SAVED_SUB_BUTTON_VISIBILITY, ui.btnSubtract.visibility)
     }
 
     override fun onPause() {
@@ -124,10 +118,10 @@ class MainActivity : AppCompatActivity() {
         val pref = getSharedPreferences(sharedPrefs, Context.MODE_PRIVATE)
         val editor = pref.edit()
 
-        editor.putInt(SAVED_TOTAL_COUNTER, totalCounter)
-        editor.putInt(SAVED_PEOPLE_COUNTER, peopleCounter)
-        editor.putInt(OVER_CAPACITY_INDICATOR, tvPeopleCounter.currentTextColor)
-        editor.putInt(SAVED_SUB_BUTTON_VISIBILITY, btnSubtract.visibility)
+        editor.putInt(SAVED_TOTAL_COUNTER, viewModel.totalCounter)
+        editor.putInt(SAVED_PEOPLE_COUNTER, viewModel.peopleCounter)
+        editor.putInt(SAVED_PEOPLE_COUNTER_COLOR, viewModel.peopleCounterColor)
+        editor.putBoolean(SAVED_SUB_BUTTON_VISIBILITY, viewModel.btnSubtractVisibility)
 
         editor.apply()
     }
